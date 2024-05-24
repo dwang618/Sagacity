@@ -15,39 +15,35 @@ data <- read.csv("survey.csv")
 ui <- fluidPage(
 
     # Application title
-    titlePanel("Old Faithful Geyser Data"),
-
-    # Sidebar with a slider input for number of bins 
+    titlePanel("Mental Health Calc"),
+    
     sidebarLayout(
-        sidebarPanel(
-            sliderInput("bins",
-                        "Number of bins:",
-                        min = 1,
-                        max = 50,
-                        value = 30)
-        ),
-
-        # Show a plot of the generated distribution
-        mainPanel(
-           plotOutput("distPlot")
-        )
+      sidebarPanel(
+        selectInput("state", "Pick a state!", choices = unique(data$state), selected = "NY")
+      ),
+      mainPanel(
+        textOutput("amntOfPpl")
+      )
     )
+
 )
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
-
-    output$distPlot <- renderPlot({
-        # generate bins based on input$bins from ui.R
-        x    <- faithful[, 2]
-        bins <- seq(min(x), max(x), length.out = input$bins + 1)
-
-        # draw the histogram with the specified number of bins
-        hist(x, breaks = bins, col = 'darkgray', border = 'white',
-             xlab = 'Waiting time to next eruption (in mins)',
-             main = 'Histogram of waiting times')
-    })
+  filtered_data <- reactive({
+    req(input$state)
+    filter(data, treatment == "Yes" & state == input$state)
+  })
+  output$amntOfPpl <- renderText({
+    filtered <- filtered_data()
+    amnt <- 0
+    amnt <- nrow(filtered)
+    paste("Total number of people who sought treatment in", input$state, ":", amnt)
+  })
+  
 }
+
+
 
 # Run the application 
 shinyApp(ui = ui, server = server)
